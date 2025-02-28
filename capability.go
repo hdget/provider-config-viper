@@ -6,10 +6,15 @@ import (
 	"go.uber.org/fx"
 )
 
+const (
+	providerName = "config-viper"
+)
+
 var Capability = &types.Capability{
 	Category: types.ProviderCategoryConfig,
+	Name:     providerName,
 	Module: fx.Module(
-		string(types.ProviderNameConfigViper),
+		providerName,
 		fx.Provide(pkg.New),
 	),
 }
