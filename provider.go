@@ -5,7 +5,7 @@
 //	setting/app/<app>/<app>.test.toml
 //	setting/dapr/*
 //	...
-package pkg
+package viper
 
 import (
 	"bytes"
@@ -58,6 +58,10 @@ func New(sdkConfig *types.SdkConfig) (intf.ConfigProvider, error) {
 	}
 
 	return provider, nil
+}
+
+func (p *viperConfigProvider) GetCapability() types.Capability {
+	return Capability
 }
 
 func (p *viperConfigProvider) Unmarshal(configVar any, args ...string) error {

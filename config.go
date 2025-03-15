@@ -1,4 +1,4 @@
-package pkg
+package viper
 
 import (
 	"github.com/hdget/common/types"
