@@ -28,10 +28,6 @@ type viperConfigProvider struct {
 
 }
 
-func (p *viperConfigProvider) GetCapability() types.Capability {
-	return Capability
-}
-
 const (
 	// 最小化的配置,保证日志工作正常
 	tplMinimalConfigContent = `
@@ -62,6 +58,10 @@ func New(sdkConfig *types.SdkConfig) (intf.ConfigProvider, error) {
 	}
 
 	return provider, nil
+}
+
+func (p *viperConfigProvider) GetCapability() types.Capability {
+	return Capability
 }
 
 func (p *viperConfigProvider) Unmarshal(configVar any, args ...string) error {
