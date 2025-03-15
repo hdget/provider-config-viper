@@ -5,7 +5,7 @@
 //	setting/app/<app>/<app>.test.toml
 //	setting/dapr/*
 //	...
-package pkg
+package viper
 
 import (
 	"bytes"
@@ -26,6 +26,10 @@ type viperConfigProvider struct {
 	config *viperConfig
 	// 配置项
 
+}
+
+func (p *viperConfigProvider) GetCapability() types.Capability {
+	return Capability
 }
 
 const (
