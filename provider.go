@@ -9,9 +9,10 @@ import (
 	"github.com/hdget/common/constant"
 	"github.com/hdget/common/intf"
 	"github.com/hdget/common/types"
-	loader2 "github.com/hdget/provider-config-viper/loader"
+	"github.com/hdget/provider-config-viper/loader"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"os"
 )
 
 // viperConfigProvider 命令行配置
@@ -24,7 +25,12 @@ type viperConfigProvider struct {
 }
 
 // New 初始化config provider
-func New(app, env string, option *Option) (intf.ConfigProvider, error) {
+func New(app string, option *Option) (intf.ConfigProvider, error) {
+	env, exists := os.LookupEnv(constant.EnvKeyRunEnvironment)
+	if !exists {
+		return nil, errors.New("env not found")
+	}
+
 	provider := &viperConfigProvider{
 		app:    app,
 		env:    env,
@@ -35,7 +41,7 @@ func New(app, env string, option *Option) (intf.ConfigProvider, error) {
 
 	err := provider.Load()
 	if err != nil {
-		return nil, errors.Wrap(err, "load local option")
+		return nil, errors.Wrap(err, "load config")
 	}
 
 	return provider, nil
@@ -49,25 +55,25 @@ func New(app, env string, option *Option) (intf.ConfigProvider, error) {
 func (p *viperConfigProvider) Load() error {
 	// 如果环境变量为空，则加载最小基本配置
 	if p.env == "" {
-		return loader2.NewMinimalConfigLoader(p.app, p.local).Load()
+		return loader.NewMinimalConfigLoader(p.app, p.local).Load()
 	}
 
-	if err := loader2.NewRemoteConfigLoader(p.remote, p.option.Remote).Load(); err != nil {
+	if err := loader.NewRemoteConfigLoader(p.remote, p.option.Remote).Load(); err != nil {
 		return errors.Wrap(err, "load config from remote")
 	}
 
 	// 尝试从环境变量中获取配置信息
-	if err := loader2.NewFileConfigLoader(p.local, p.option.File).Load(); err != nil {
+	if err := loader.NewFileConfigLoader(p.app, p.env, p.local, p.option.File).Load(); err != nil {
 		return errors.Wrap(err, "load config from file")
 	}
 
 	// 尝试从环境变量中获取配置信息
-	if err := loader2.NewEnvConfigLoader(p.local, p.option.Env).Load(); err != nil {
+	if err := loader.NewEnvConfigLoader(p.local, p.option.Env).Load(); err != nil {
 		return errors.Wrap(err, "load config from env")
 	}
 
 	// 尝试从环境变量中获取配置信息
-	if err := loader2.NewCliConfigLoader(p.local, p.option.Cli).Load(); err != nil {
+	if err := loader.NewCliConfigLoader(p.local, p.option.Cli).Load(); err != nil {
 		return errors.Wrap(err, "load config from cli")
 	}
 
@@ -91,7 +97,7 @@ func (p *viperConfigProvider) UnmarshalGlobal(configVar any, args ...string) err
 	if len(args) > 0 {
 		return p.remote.UnmarshalKey(globalPath, configVar)
 	}
-	return p.local.Unmarshal(configVar)
+	return p.remote.Unmarshal(configVar)
 }
 
 func (p *viperConfigProvider) GetCapability() types.Capability {

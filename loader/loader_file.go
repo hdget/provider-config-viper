@@ -15,8 +15,10 @@ type fileConfigLoader struct {
 	option     *FileConfigLoaderOption
 }
 
-func NewFileConfigLoader(localViper *viper.Viper, option *FileConfigLoaderOption) Loader {
+func NewFileConfigLoader(app, env string, localViper *viper.Viper, option *FileConfigLoaderOption) Loader {
 	return &fileConfigLoader{
+		app:        app,
+		env:        env,
 		localViper: localViper,
 		option:     option,
 	}
