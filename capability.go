@@ -2,12 +2,11 @@ package viper
 
 import (
 	"github.com/hdget/common/types"
-	"github.com/hdget/provider-config-viper/pkg"
 	"go.uber.org/fx"
 )
 
 const (
-	providerName = "config-viper"
+	providerName = "option-viper"
 )
 
 var Capability = &types.Capability{
@@ -15,6 +14,6 @@ var Capability = &types.Capability{
 	Name:     providerName,
 	Module: fx.Module(
 		providerName,
-		fx.Provide(pkg.New),
+		fx.Provide(New),
 	),
 }
