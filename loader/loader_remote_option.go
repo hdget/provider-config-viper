@@ -4,20 +4,15 @@ type RemoteConfigLoaderOption struct {
 	RemoteProvider      string
 	RemoteEndpoints     []string
 	RemoteSecret        string
-	RemotePath          string
 	RemoteConfigType    string
 	RemoteWatchInterval int // 单位：秒
-	RemoteWatchCallback func()
 }
-
-const (
-	defaultRemotePath = "/config"
-)
 
 func NewRemoteConfigLoaderOption() *RemoteConfigLoaderOption {
 	return &RemoteConfigLoaderOption{
-		RemoteEndpoints:  make([]string, 0),
-		RemotePath:       defaultRemotePath,
-		RemoteConfigType: "json",
+		RemoteEndpoints:     []string{"http://127.0.0.1:2379"},
+		RemoteProvider:      "etcd3",
+		RemoteConfigType:    "json",
+		RemoteWatchInterval: 5,
 	}
 }

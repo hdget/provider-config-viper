@@ -5,10 +5,12 @@ import (
 )
 
 type Option struct {
-	File   *loader.FileConfigLoaderOption
-	Env    *loader.EnvConfigLoaderOption
-	Remote *loader.RemoteConfigLoaderOption
-	Cli    *loader.CliConfigLoaderOption
+	File                      *loader.FileConfigLoaderOption
+	Env                       *loader.EnvConfigLoaderOption
+	Remote                    *loader.RemoteConfigLoaderOption
+	Cli                       *loader.CliConfigLoaderOption
+	RemoteGlobalWatchCallback func()
+	RemoteAppWatchCallback    func()
 }
 
 func NewOption() *Option {
@@ -35,12 +37,12 @@ func (o *Option) UseEnvPrefix(envPrefix string) *Option {
 	return o
 }
 
-func (o *Option) UseRemotePath(remotePath string) *Option {
-	o.Remote.RemotePath = remotePath
+func (o *Option) UseRemoteGlobalWatchCallback(callback func()) *Option {
+	o.RemoteGlobalWatchCallback = callback
 	return o
 }
 
-func (o *Option) UseRemoteWatchCallback(callback func()) *Option {
-	o.Remote.RemoteWatchCallback = callback
+func (o *Option) UseRemoteAppWatchCallback(callback func()) *Option {
+	o.RemoteAppWatchCallback = callback
 	return o
 }

@@ -3,19 +3,24 @@ package loader
 import (
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	_ "github.com/spf13/viper/remote"
 	"strings"
 	"time"
 )
 
 type remoteConfigLoader struct {
-	remoteViper *viper.Viper
-	option      *RemoteConfigLoaderOption
+	remoteViper         *viper.Viper
+	option              *RemoteConfigLoaderOption
+	remotePath          string
+	remoteWatchCallback func()
 }
 
-func NewRemoteConfigLoader(remoteViper *viper.Viper, option *RemoteConfigLoaderOption) Loader {
+func NewRemoteConfigLoader(remoteViper *viper.Viper, option *RemoteConfigLoaderOption, remotePath string, remoteWatchCallback func()) Loader {
 	return &remoteConfigLoader{
-		remoteViper: remoteViper,
-		option:      option,
+		remoteViper:         remoteViper,
+		option:              option,
+		remotePath:          remotePath,
+		remoteWatchCallback: remoteWatchCallback,
 	}
 }
 
@@ -30,14 +35,14 @@ func (loader *remoteConfigLoader) Load() error {
 		err = loader.remoteViper.AddSecureRemoteProvider(
 			loader.option.RemoteProvider,
 			strings.Join(loader.option.RemoteEndpoints, ";"),
-			loader.option.RemotePath,
+			loader.remotePath,
 			loader.option.RemoteSecret,
 		)
 	} else {
 		err = loader.remoteViper.AddRemoteProvider(
 			loader.option.RemoteProvider,
 			strings.Join(loader.option.RemoteEndpoints, ";"),
-			loader.option.RemotePath,
+			loader.remotePath,
 		)
 	}
 	if err != nil {
@@ -45,10 +50,9 @@ func (loader *remoteConfigLoader) Load() error {
 	}
 
 	loader.remoteViper.SetConfigType(loader.option.RemoteConfigType)
-	err = loader.remoteViper.ReadRemoteConfig()
-	if err != nil {
-		return errors.Wrap(err, "read remote provider")
-	}
+
+	// 尝试读取，不报错
+	_ = loader.remoteViper.ReadRemoteConfig()
 
 	// open a goroutine to watch remote changes forever
 	go func() {
@@ -60,7 +64,9 @@ func (loader *remoteConfigLoader) Load() error {
 				continue
 			}
 
-			loader.option.RemoteWatchCallback()
+			if loader.remoteWatchCallback != nil {
+				loader.remoteWatchCallback()
+			}
 		}
 	}()
 
