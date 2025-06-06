@@ -6,7 +6,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/hdget/common/constant"
 	"github.com/hdget/common/intf"
+	"github.com/hdget/common/types"
 	loader2 "github.com/hdget/provider-config-viper/loader"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -20,11 +22,6 @@ type viperConfigProvider struct {
 	remote *viper.Viper
 	option *Option
 }
-
-const (
-	remoteLocalKey  = "local.%s.%s"
-	remoteGlobalKey = "global.%s"
-)
 
 // New 初始化config provider
 func New(app, env string, option *Option) (intf.ConfigProvider, error) {
@@ -55,22 +52,22 @@ func (p *viperConfigProvider) Load() error {
 		return loader2.NewMinimalConfigLoader(p.app, p.local).Load()
 	}
 
-	if err := loader2.NewRemoteConfigLoader(p.remote, p.option.RemoteConfigLoaderOption).Load(); err != nil {
+	if err := loader2.NewRemoteConfigLoader(p.remote, p.option.Remote).Load(); err != nil {
 		return errors.Wrap(err, "load config from remote")
 	}
 
 	// 尝试从环境变量中获取配置信息
-	if err := loader2.NewFileConfigLoader(p.local, p.option.FileConfigLoaderOption).Load(); err != nil {
+	if err := loader2.NewFileConfigLoader(p.local, p.option.File).Load(); err != nil {
 		return errors.Wrap(err, "load config from file")
 	}
 
 	// 尝试从环境变量中获取配置信息
-	if err := loader2.NewEnvConfigLoader(p.local, p.option.EnvConfigLoaderOption).Load(); err != nil {
+	if err := loader2.NewEnvConfigLoader(p.local, p.option.Env).Load(); err != nil {
 		return errors.Wrap(err, "load config from env")
 	}
 
 	// 尝试从环境变量中获取配置信息
-	if err := loader2.NewInputConfigLoader(p.local, p.option.InputConfigLoaderOption).Load(); err != nil {
+	if err := loader2.NewCliConfigLoader(p.local, p.option.Cli).Load(); err != nil {
 		return errors.Wrap(err, "load config from cli")
 	}
 
@@ -89,8 +86,20 @@ func (p *viperConfigProvider) Unmarshal(configVar any, args ...string) error {
 	return p.local.Unmarshal(configVar)
 }
 
+func (p *viperConfigProvider) UnmarshalGlobal(configVar any, args ...string) error {
+	globalPath := fmt.Sprintf(constant.ConfigKeyRemoteGlobal, p.env)
+	if len(args) > 0 {
+		return p.remote.UnmarshalKey(globalPath, configVar)
+	}
+	return p.local.Unmarshal(configVar)
+}
+
+func (p *viperConfigProvider) GetCapability() types.Capability {
+	return Capability
+}
+
 func (p *viperConfigProvider) mergeRemoteLocalConfig() error {
-	localPath := fmt.Sprintf(remoteLocalKey, p.env, p.app)
+	localPath := fmt.Sprintf(constant.ConfigKeyRemoteLocal, p.env, p.app)
 	if p.remote.Get(localPath) != nil {
 		data, err := json.Marshal(p.remote.Sub(localPath).AllSettings())
 		if err != nil {
@@ -103,12 +112,4 @@ func (p *viperConfigProvider) mergeRemoteLocalConfig() error {
 		}
 	}
 	return nil
-}
-
-func (p *viperConfigProvider) UnmarshalGlobal(configVar any, args ...string) error {
-	globalPath := fmt.Sprintf(remoteGlobalKey, p.env)
-	if len(args) > 0 {
-		return p.remote.UnmarshalKey(globalPath, configVar)
-	}
-	return p.local.Unmarshal(configVar)
 }

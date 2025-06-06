@@ -9,7 +9,7 @@ const (
 	providerName = "option-viper"
 )
 
-var Capability = &types.Capability{
+var Capability = types.Capability{
 	Category: types.ProviderCategoryConfig,
 	Name:     providerName,
 	Module: fx.Module(
