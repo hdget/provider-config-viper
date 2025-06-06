@@ -13,6 +13,6 @@ func NewRemoteConfigLoaderOption() *RemoteConfigLoaderOption {
 		RemoteEndpoints:     []string{"http://127.0.0.1:2379"},
 		RemoteProvider:      "etcd3",
 		RemoteConfigType:    "json",
-		RemoteWatchInterval: 5,
+		RemoteWatchInterval: 10,
 	}
 }

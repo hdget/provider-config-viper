@@ -54,15 +54,14 @@ func (loader *remoteConfigLoader) Load() error {
 	// 尝试读取，不报错
 	_ = loader.remoteViper.ReadRemoteConfig()
 
-	// open a goroutine to watch remote changes forever
+	if err = loader.remoteViper.WatchRemoteConfigOnChannel(); err != nil {
+		return err
+	}
+
+	// open a goroutine to unmarshal remote config
 	go func() {
 		for {
-			time.Sleep(time.Second * time.Duration(loader.option.RemoteWatchInterval)) // delay after each request
-
-			// currently, only tested with etcd support
-			if err = loader.remoteViper.WatchRemoteConfig(); err != nil {
-				continue
-			}
+			time.Sleep(time.Second * time.Duration(loader.option.RemoteWatchInterval))
 
 			if loader.remoteWatchCallback != nil {
 				loader.remoteWatchCallback()
