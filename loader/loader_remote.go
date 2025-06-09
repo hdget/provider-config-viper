@@ -1,6 +1,8 @@
 package loader
 
 import (
+	"fmt"
+	"github.com/hdget/common/constant"
 	"github.com/hdget/provider-config-viper/param"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -12,19 +14,36 @@ import (
 type remoteConfigLoader struct {
 	viper *viper.Viper
 	param *param.Remote
+	env   string
 }
 
-func NewRemoteConfigLoader(viper *viper.Viper, param *param.Remote) Loader {
+func NewRemoteConfigLoader(viper *viper.Viper, param *param.Remote, env string) Loader {
 	return &remoteConfigLoader{
 		viper: viper,
 		param: param,
+		env:   env,
 	}
 }
 
 // Load 从环境变量中读取配置信息
 func (loader *remoteConfigLoader) Load() error {
-	if loader.param == nil || loader.param.Provider == "" || len(loader.param.Endpoints) == 0 {
+	if loader.param == nil || loader.param.Provider == "" {
 		return nil
+	}
+
+	// 如果endpoints为空，尝试已读取的配置中获取
+	if len(loader.param.Endpoints) == 0 {
+		configEndpoints := loader.viper.GetStringSlice(fmt.Sprintf(constant.ConfigKeyRemoteEndpoints, loader.param.Provider))
+		if len(configEndpoints) != 0 {
+			loader.param.Endpoints = configEndpoints
+		} else {
+			loader.param.Endpoints = param.DefaultRemoteEndpoints
+		}
+	}
+
+	// 如果watchPath为空，设置缺省值
+	if loader.param.WatchPath == "" {
+		loader.param.WatchPath = fmt.Sprintf(constant.ConfigPathRemote, loader.env)
 	}
 
 	var err error

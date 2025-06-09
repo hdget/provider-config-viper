@@ -16,7 +16,7 @@ type fileConfigLoader struct {
 	param      *param.File
 }
 
-func NewFileConfigLoader(localViper *viper.Viper, app, env string, param *param.File) Loader {
+func NewFileConfigLoader(localViper *viper.Viper, param *param.File, app, env string) Loader {
 	return &fileConfigLoader{
 		app:        app,
 		env:        env,

@@ -16,8 +16,14 @@ func WithConfigContent(configContent []byte) Option {
 	}
 }
 
+func WithEnableRemote() Option {
+	return func(p *param.Param) {
+		p.Remote = param.NewRemoteDefaultParam()
+	}
+}
+
 func WithRemote(remoteParam *param.Remote) Option {
-	return func(param *param.Param) {
-		param.Remote = remoteParam
+	return func(p *param.Param) {
+		p.Remote = remoteParam
 	}
 }
