@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	providerName = "param-viper"
+	providerName = "config-viper"
 )
 
 var Capability = types.Capability{
