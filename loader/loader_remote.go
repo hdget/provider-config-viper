@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"github.com/hdget/provider-config-viper/param"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
@@ -9,62 +10,59 @@ import (
 )
 
 type remoteConfigLoader struct {
-	remoteViper         *viper.Viper
-	option              *RemoteConfigLoaderOption
-	remotePath          string
-	remoteWatchCallback func()
+	viper *viper.Viper
+	param *param.Remote
 }
 
-func NewRemoteConfigLoader(remoteViper *viper.Viper, option *RemoteConfigLoaderOption, remotePath string, remoteWatchCallback func()) Loader {
+func NewRemoteConfigLoader(viper *viper.Viper, param *param.Remote) Loader {
 	return &remoteConfigLoader{
-		remoteViper:         remoteViper,
-		option:              option,
-		remotePath:          remotePath,
-		remoteWatchCallback: remoteWatchCallback,
+		viper: viper,
+		param: param,
 	}
 }
 
 // Load 从环境变量中读取配置信息
 func (loader *remoteConfigLoader) Load() error {
-	if loader.option.RemoteProvider == "" || len(loader.option.RemoteEndpoints) == 0 {
+	if loader.param == nil || loader.param.Provider == "" || len(loader.param.Endpoints) == 0 {
 		return nil
 	}
 
 	var err error
-	if loader.option.RemoteSecret != "" {
-		err = loader.remoteViper.AddSecureRemoteProvider(
-			loader.option.RemoteProvider,
-			strings.Join(loader.option.RemoteEndpoints, ";"),
-			loader.remotePath,
-			loader.option.RemoteSecret,
+	if loader.param.Secret != "" {
+		err = loader.viper.AddSecureRemoteProvider(
+			loader.param.Provider,
+			strings.Join(loader.param.Endpoints, ";"),
+			loader.param.WatchPath,
+			loader.param.Secret,
 		)
 	} else {
-		err = loader.remoteViper.AddRemoteProvider(
-			loader.option.RemoteProvider,
-			strings.Join(loader.option.RemoteEndpoints, ";"),
-			loader.remotePath,
+		err = loader.viper.AddRemoteProvider(
+			loader.param.Provider,
+			strings.Join(loader.param.Endpoints, ";"),
+			loader.param.WatchPath,
 		)
 	}
 	if err != nil {
 		return errors.Wrap(err, "add remote Provider")
 	}
 
-	loader.remoteViper.SetConfigType(loader.option.RemoteConfigType)
+	loader.viper.SetConfigType(loader.param.RemoteConfigType)
 
 	// 尝试读取，不报错
-	_ = loader.remoteViper.ReadRemoteConfig()
+	_ = loader.viper.ReadRemoteConfig()
 
-	if err = loader.remoteViper.WatchRemoteConfigOnChannel(); err != nil {
+	// 自动读取到kvstore
+	if err = loader.viper.WatchRemoteConfigOnChannel(); err != nil {
 		return err
 	}
 
 	// open a goroutine to unmarshal remote config
 	go func() {
 		for {
-			time.Sleep(time.Second * time.Duration(loader.option.RemoteWatchInterval))
+			time.Sleep(time.Second * time.Duration(loader.param.WatchInterval))
 
-			if loader.remoteWatchCallback != nil {
-				loader.remoteWatchCallback()
+			if loader.param.WatchCallback != nil {
+				loader.param.WatchCallback()
 			}
 		}
 	}()

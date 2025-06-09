@@ -2,34 +2,31 @@ package loader
 
 import (
 	"bytes"
+	"github.com/hdget/provider-config-viper/param"
 	"github.com/spf13/viper"
 )
 
-type CliConfigLoaderOption struct {
-	Content []byte // 如果用WithConfigContent指定了配置内容，则这里不为空
-}
-
 type cliConfigLoader struct {
 	localViper *viper.Viper
-	option     *CliConfigLoaderOption
+	param      *param.Cli
 }
 
-func NewCliConfigLoader(localViper *viper.Viper, option *CliConfigLoaderOption) Loader {
+func NewCliConfigLoader(localViper *viper.Viper, param *param.Cli) Loader {
 	return &cliConfigLoader{
 		localViper: localViper,
-		option:     option,
+		param:      param,
 	}
-}
-
-func NewCliConfigLoaderOption() *CliConfigLoaderOption {
-	return &CliConfigLoaderOption{}
 }
 
 // Load 从环境变量中读取配置信息
 func (loader *cliConfigLoader) Load() error {
+	if loader.param == nil {
+		return nil
+	}
+
 	// 如果指定了配置内容，则合并
-	if loader.option.Content != nil {
-		_ = loader.localViper.MergeConfig(bytes.NewReader(loader.option.Content))
+	if loader.param.Content != nil {
+		_ = loader.localViper.MergeConfig(bytes.NewReader(loader.param.Content))
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package loader
 
 import (
 	"fmt"
+	"github.com/hdget/provider-config-viper/param"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"path/filepath"
@@ -12,21 +13,21 @@ type fileConfigLoader struct {
 	app        string
 	env        string
 	localViper *viper.Viper
-	option     *FileConfigLoaderOption
+	param      *param.File
 }
 
-func NewFileConfigLoader(app, env string, localViper *viper.Viper, option *FileConfigLoaderOption) Loader {
+func NewFileConfigLoader(localViper *viper.Viper, app, env string, param *param.File) Loader {
 	return &fileConfigLoader{
 		app:        app,
 		env:        env,
 		localViper: localViper,
-		option:     option,
+		param:      param,
 	}
 }
 
 func (f *fileConfigLoader) Load() error {
 	// 找配置文件
-	err := f.setupConfigFileFindOptions()
+	err := f.setupConfigFileFindParams()
 	if err != nil {
 		return errors.Wrapf(err, "setup config file")
 	}
@@ -40,25 +41,25 @@ func (f *fileConfigLoader) Load() error {
 	return nil
 }
 
-func (f *fileConfigLoader) setupConfigFileFindOptions() error {
+func (f *fileConfigLoader) setupConfigFileFindParams() error {
 	// 设置文件配置的类型
-	f.localViper.SetConfigType(f.option.FileConfigType)
+	f.localViper.SetConfigType(f.param.FileConfigType)
 
 	// 如果指定了配置文件
-	if f.option.File != "" {
-		f.localViper.SetConfigFile(f.option.File)
+	if f.param.File != "" {
+		f.localViper.SetConfigFile(f.param.File)
 		return nil
 	}
 
 	// 未指定配置文件
 	// 获取config filename
-	searchConfigFileName := f.option.SearchFileName
+	searchConfigFileName := f.param.SearchFileName
 	if searchConfigFileName == "" {
 		searchConfigFileName = f.getDefaultConfigFilename()
 	}
 
 	// 获取config dirs
-	searchConfigDirs := f.option.SearchDirs
+	searchConfigDirs := f.param.SearchDirs
 	if len(searchConfigDirs) == 0 {
 		foundDir := f.findConfigDir()
 		if foundDir == "" {
@@ -90,11 +91,11 @@ func (f *fileConfigLoader) findConfigDir() string {
 	}
 
 	var found string
-	matchFile := fmt.Sprintf("%s.%s.%s", f.app, f.env, f.option.FileConfigType)
+	matchFile := fmt.Sprintf("%s.%s.%s", f.app, f.env, f.param.FileConfigType)
 	currPath := absStartPath
 LOOP:
 	for {
-		for _, rootDir := range f.option.RootDirs {
+		for _, rootDir := range f.param.RootDirs {
 			// possible parent dir name
 			dirName := filepath.Join(rootDir, f.app)
 			checkDir := filepath.Join(currPath, dirName, matchFile)

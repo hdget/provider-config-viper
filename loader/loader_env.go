@@ -1,28 +1,29 @@
 package loader
 
-import "github.com/spf13/viper"
+import (
+	"github.com/hdget/provider-config-viper/param"
+	"github.com/spf13/viper"
+)
 
 type envLoader struct {
 	localViper *viper.Viper
-	option     *EnvConfigLoaderOption
+	param      *param.Env
 }
 
-func NewEnvConfigLoader(localViper *viper.Viper, option *EnvConfigLoaderOption) Loader {
+func NewEnvConfigLoader(localViper *viper.Viper, param *param.Env) Loader {
 	return &envLoader{
 		localViper: localViper,
-		option:     option,
+		param:      param,
 	}
 }
 
 // Load 从环境变量中读取配置信息
 func (loader *envLoader) Load() error {
-	envPrefix := loader.option.EnvPrefix
-	// 如果设置了环境变量前缀，则尝试自动获取环境变量中的配置
-	if envPrefix == "" {
-		envPrefix = defaultEnvPrefix
+	if loader.param == nil {
+		return nil
 	}
 
-	loader.localViper.SetEnvPrefix(envPrefix)
+	loader.localViper.SetEnvPrefix(loader.param.Prefix)
 	loader.localViper.AutomaticEnv()
 	return nil
 }

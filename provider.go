@@ -3,11 +3,11 @@
 package viper
 
 import (
-	"fmt"
 	"github.com/hdget/common/constant"
 	"github.com/hdget/common/intf"
 	"github.com/hdget/common/types"
 	"github.com/hdget/provider-config-viper/loader"
+	"github.com/hdget/provider-config-viper/param"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"os"
@@ -15,28 +15,29 @@ import (
 
 // viperConfigProvider 命令行配置
 type viperConfigProvider struct {
-	app          string
-	env          string
-	local        *viper.Viper
-	remoteGlobal *viper.Viper
-	remoteApp    *viper.Viper
-	option       *Option
+	app   string
+	env   string
+	local *viper.Viper
+	param *param.Param
 }
 
 // New 初始化config provider
-func New(app string, option *Option) (intf.ConfigProvider, error) {
+func New(app string, options ...Option) (intf.ConfigProvider, error) {
 	env, exists := os.LookupEnv(constant.EnvKeyRunEnvironment)
 	if !exists {
 		return nil, errors.New("env not found")
 	}
 
+	loaderParam := param.GetDefaultParam()
+	for _, apply := range options {
+		apply(loaderParam)
+	}
+
 	provider := &viperConfigProvider{
-		app:          app,
-		env:          env,
-		local:        viper.New(),
-		remoteGlobal: viper.New(),
-		remoteApp:    viper.New(),
-		option:       option,
+		app:   app,
+		env:   env,
+		local: viper.New(),
+		param: loaderParam,
 	}
 
 	err := provider.Load()
@@ -58,60 +59,34 @@ func (p *viperConfigProvider) Load() error {
 		return loader.NewMinimalConfigLoader(p.app, p.local).Load()
 	}
 
-	if err := loader.NewRemoteConfigLoader(
-		p.remoteGlobal,
-		p.option.Remote,
-		fmt.Sprintf(constant.RemoteConfigKeyGlobal, p.env),
-		p.option.RemoteGlobalWatchCallback).Load(); err != nil {
-		return errors.Wrap(err, "load config from remote")
-	}
-
-	if err := loader.NewRemoteConfigLoader(
-		p.remoteApp,
-		p.option.Remote,
-		fmt.Sprintf(constant.RemoteConfigKeyApp, p.env, p.app),
-		p.option.RemoteAppWatchCallback).Load(); err != nil {
+	if err := loader.NewRemoteConfigLoader(p.local, p.param.Remote).Load(); err != nil {
 		return errors.Wrap(err, "load config from remote")
 	}
 
 	// 尝试从环境变量中获取配置信息
-	if err := loader.NewFileConfigLoader(p.app, p.env, p.local, p.option.File).Load(); err != nil {
+	if err := loader.NewFileConfigLoader(p.local, p.app, p.env, p.param.File).Load(); err != nil {
 		return errors.Wrap(err, "load config from file")
 	}
 
 	// 尝试从环境变量中获取配置信息
-	if err := loader.NewEnvConfigLoader(p.local, p.option.Env).Load(); err != nil {
+	if err := loader.NewEnvConfigLoader(p.local, p.param.Env).Load(); err != nil {
 		return errors.Wrap(err, "load config from env")
 	}
 
 	// 尝试从环境变量中获取配置信息
-	if err := loader.NewCliConfigLoader(p.local, p.option.Cli).Load(); err != nil {
+	if err := loader.NewCliConfigLoader(p.local, p.param.Cli).Load(); err != nil {
 		return errors.Wrap(err, "load config from cli")
 	}
 
 	return nil
 }
 
-// Unmarshal local
+// Unmarshal 解析配置
 func (p *viperConfigProvider) Unmarshal(configVar any, args ...string) error {
 	if len(args) > 0 {
 		return p.local.UnmarshalKey(args[0], configVar)
 	}
 	return p.local.Unmarshal(configVar)
-}
-
-func (p *viperConfigProvider) UnmarshalRemoteGlobal(configVar any, args ...string) error {
-	if len(args) > 0 {
-		return p.remoteGlobal.UnmarshalKey(args[0], configVar)
-	}
-	return p.remoteGlobal.Unmarshal(configVar)
-}
-
-func (p *viperConfigProvider) UnmarshalRemoteApp(configVar any, args ...string) error {
-	if len(args) > 0 {
-		return p.remoteApp.UnmarshalKey(args[0], configVar)
-	}
-	return p.remoteApp.Unmarshal(configVar)
 }
 
 func (p *viperConfigProvider) GetCapability() types.Capability {

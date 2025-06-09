@@ -1,48 +1,23 @@
 package viper
 
-import (
-	"github.com/hdget/provider-config-viper/loader"
-)
+import "github.com/hdget/provider-config-viper/param"
 
-type Option struct {
-	File                      *loader.FileConfigLoaderOption
-	Env                       *loader.EnvConfigLoaderOption
-	Remote                    *loader.RemoteConfigLoaderOption
-	Cli                       *loader.CliConfigLoaderOption
-	RemoteGlobalWatchCallback func()
-	RemoteAppWatchCallback    func()
-}
+type Option func(*param.Param)
 
-func NewOption() *Option {
-	return &Option{
-		File:   loader.NewFileConfigLoaderOption(),
-		Env:    loader.NewEnvConfigLoaderOption(),
-		Remote: loader.NewRemoteConfigLoaderOption(),
-		Cli:    loader.NewCliConfigLoaderOption(),
+func WithConfigFile(configFile string) Option {
+	return func(param *param.Param) {
+		param.File.File = configFile
 	}
 }
 
-func (o *Option) UseConfigFile(configFile string) *Option {
-	o.File.File = configFile
-	return o
+func WithConfigContent(configContent []byte) Option {
+	return func(param *param.Param) {
+		param.Cli.Content = configContent
+	}
 }
 
-func (o *Option) UseConfigContent(configContent []byte) *Option {
-	o.Cli.Content = configContent
-	return o
-}
-
-func (o *Option) UseEnvPrefix(envPrefix string) *Option {
-	o.Env.EnvPrefix = envPrefix
-	return o
-}
-
-func (o *Option) UseRemoteGlobalWatchCallback(callback func()) *Option {
-	o.RemoteGlobalWatchCallback = callback
-	return o
-}
-
-func (o *Option) UseRemoteAppWatchCallback(callback func()) *Option {
-	o.RemoteAppWatchCallback = callback
-	return o
+func WithRemote(remoteParam *param.Remote) Option {
+	return func(param *param.Param) {
+		param.Remote = remoteParam
+	}
 }

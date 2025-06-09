@@ -1,8 +1,8 @@
-package loader
+package param
 
 import "path/filepath"
 
-type FileConfigLoaderOption struct {
+type File struct {
 	FileConfigType string   // 配置内容类型，e,g: toml, json
 	RootDirs       []string // 配置文件所在的RootDirs
 	File           string   // 指定的配置文件
@@ -29,8 +29,8 @@ var (
 	}
 )
 
-func NewFileConfigLoaderOption() *FileConfigLoaderOption {
-	return &FileConfigLoaderOption{
+func NewFileDefaultParam() *File {
+	return &File{
 		FileConfigType: defaultConfigType,
 		RootDirs:       defaultConfigRootDirs,
 		File:           "",
