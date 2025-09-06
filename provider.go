@@ -4,7 +4,6 @@ package viper
 
 import (
 	"github.com/hdget/common/constant"
-	"github.com/hdget/common/intf"
 	"github.com/hdget/common/types"
 	"github.com/hdget/provider-config-viper/loader"
 	"github.com/hdget/provider-config-viper/param"
@@ -22,7 +21,7 @@ type viperConfigProvider struct {
 }
 
 // New 初始化config provider
-func New(app string, param *param.Param) (intf.ConfigProvider, error) {
+func New(app string, param *param.Param) (types.ConfigProvider, error) {
 	env, exists := os.LookupEnv(constant.EnvKeyRunEnvironment)
 	if !exists {
 		return nil, errors.New("env not found")
