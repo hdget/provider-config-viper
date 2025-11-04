@@ -3,7 +3,7 @@ module github.com/hdget/provider-config-viper
 go 1.23.1
 
 require (
-	github.com/hdget/common v0.1.11
+	github.com/hdget/common v0.1.13
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.21.0
 	github.com/spf13/viper/remote v1.20.0

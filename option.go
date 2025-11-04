@@ -16,14 +16,26 @@ func WithConfigContent(configContent []byte) Option {
 	}
 }
 
-func WithEnableRemote() Option {
+func WithDefaultRemote() Option {
 	return func(p *param.Param) {
 		p.Remote = param.NewRemoteDefaultParam()
+		if p.Remote.WatchCallback == nil {
+			p.Remote.WatchCallback = p.DefaultRemoteWatcher
+		}
 	}
 }
 
 func WithRemote(remoteParam *param.Remote) Option {
 	return func(p *param.Param) {
 		p.Remote = remoteParam
+		if p.Remote.WatchCallback == nil {
+			p.Remote.WatchCallback = p.DefaultRemoteWatcher
+		}
+	}
+}
+
+func WithRemoteWatcher(watcher func()) Option {
+	return func(p *param.Param) {
+		p.DefaultRemoteWatcher = watcher
 	}
 }
