@@ -5,6 +5,7 @@ type Param struct {
 	*Env
 	*Remote
 	*Cli
+	DefaultRemoteWatcher func() // 默认的远程配置监听函数，从SDK传入
 }
 
 func GetDefaultParam() *Param {

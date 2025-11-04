@@ -1,15 +1,14 @@
-// Package viper
-
 package viper
 
 import (
+	"os"
+
 	"github.com/hdget/common/constant"
 	"github.com/hdget/common/types"
 	"github.com/hdget/provider-config-viper/loader"
 	"github.com/hdget/provider-config-viper/param"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"os"
 )
 
 // viperConfigProvider 命令行配置
@@ -21,7 +20,7 @@ type viperConfigProvider struct {
 }
 
 // New 初始化config provider
-func New(app string, param *param.Param) (types.ConfigProvider, error) {
+func New(app string, options ...Option) (types.ConfigProvider, error) {
 	env, exists := os.LookupEnv(constant.EnvKeyRunEnvironment)
 	if !exists {
 		return nil, errors.New("env not found")
@@ -31,7 +30,11 @@ func New(app string, param *param.Param) (types.ConfigProvider, error) {
 		app:   app,
 		env:   env,
 		local: viper.New(),
-		param: param,
+		param: param.GetDefaultParam(),
+	}
+
+	for _, option := range options {
+		option(provider.param)
 	}
 
 	err := provider.Load()
